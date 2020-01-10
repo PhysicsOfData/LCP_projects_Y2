@@ -17,3 +17,6 @@ The following files are there for reference:
 *  Project.ipynb the actual description of the assigned project
 
 Other files could be present if needed
+
+The date of the final exam could be booked on [doodle](https://doodle.com/poll/rnfn86dk6m647g6a) by selecting the periods (the dates are just placeholders for the first or the second half of a given month)
+
