@@ -1,7 +1,7 @@
 # Overview
 
-Each group is assigned a given VirtualMachine (VM) on the *PhysicsOfData-students* project on CloudVeneto.
-VM are named *LCP-N* and the assignation to the group *GroupN* is obvious, (e.g. `LCP-9` is assigned to `Group9`)
+Each group could be assigned a given VirtualMachine (VM) on the *PhysicsOfData-students* project on CloudVeneto.
+VM are named *LCP-Y2-GrN* and the assignation to the group *GroupN* is obvious, (e.g. `LCP-9` is assigned to `Group9`)
 
 Usuage of the CloudVeneto computing resources is **NOT** mandatory, but if those resources will be exploited to accomplish the final project, **ALL** memebrs of the group must have an account on CloudVeneto.
 
@@ -20,7 +20,7 @@ To access a VM users need to first to pass through the gate (via ssh as explaine
 ssh root@IP_VM
 ```
 
-where IP_VM is the IP of the VM you are assigned to (e.g. *LCP-1* has 10.67.22.14 as IP; all the VM's IP start with 10.67.22.* )
+where IP_VM is the IP of the VM you are assigned to 
 
 the root password has been circulated on the Whatsapp group.
 
