@@ -16,7 +16,14 @@ The following files are there for reference:
 
 *  Project.ipynb the actual description of the assigned project
 
-Other files could be present if needed
+Other files could be present if needed.
+
+
+### Computing Resources 
+
+A Virtual Machine within [CloudVeneto](http://cloudveneto.it/) can be created for each group. Note that, by default, they are not. For some projects though, large datasets are needed, in those cases a VM has been created to store those files. Refer to ClouldInstructions.md for the steps to take in order to use those resources.
+
+### Dates for the exams
 
 The date of the final exam could be booked on [doodle](https://doodle.com/poll/rnfn86dk6m647g6a) by selecting the periods (the dates are just placeholders for the first or the second half of a given month)
 
