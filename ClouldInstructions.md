@@ -1,7 +1,7 @@
 # Overview
 
 Each group could be assigned a given VirtualMachine (VM) on the *PhysicsOfData-students* project on CloudVeneto.
-VM are named *LCP-Y2-GrN* and the assignation to the group *GroupN* is obvious, (e.g. `LCP-9` is assigned to `Group9`)
+VM are named *LCP-Y2-GrN* and the assignation to the group *GroupN* is obvious, (e.g. `LCP-Y2-Gr9` is assigned to `Group9`)
 
 Usuage of the CloudVeneto computing resources is **NOT** mandatory, but if those resources will be exploited to accomplish the final project, **ALL** memebrs of the group must have an account on CloudVeneto.
 
