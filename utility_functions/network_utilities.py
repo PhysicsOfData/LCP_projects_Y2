@@ -6,9 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 ### Generates a random network of n nodes (the first one corresponds to earth)
 ### r = max distance
 
-def generate_network(n,r_max,seed=100,polar = False):
-    
-    np.random.seed(seed)
+def generate_network(n,r_max,polar = False):
     
     r = np.random.rand(n,1)*r_max
     r[0] = 0 #Earth
