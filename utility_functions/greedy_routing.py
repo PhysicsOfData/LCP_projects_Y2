@@ -136,7 +136,9 @@ def get_nodes(N, packets):
     
     #add every packet to the queue corresponding to its starting node
     for i in range(packets.shape[0]):
-        queues[packets[i,0]].append(Packet(i, packets[i,1]))
+        pkt = Packet(i, packets[i,1])
+        pkt.source = packets[i,0]
+        queues[packets[i,0]].append(pkt)
     
     #generating the Node objects
     nodes = []

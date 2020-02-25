@@ -13,6 +13,9 @@ class Packet():
         
         #index that identifies the packet, used for debugging purposes
         self.id = index
+
+        #starting node
+        self.source = -1
         
         self.route = []
         
