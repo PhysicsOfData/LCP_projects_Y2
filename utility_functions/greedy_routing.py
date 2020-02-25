@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from classes import Packet, Node
+from tqdm import tqdm
 
 #used to check if the time exceeds the maximum time of the system
 def check_time_step(A, time):
@@ -202,8 +203,11 @@ def check_nodes_connectivity(A):
         raise Exception("At least one of the nodes is never connected to the graph")
     
 #packets = source and destination of every packet
-def greedy_routing(A, packets, ttr, delta_time):
+def greedy_routing(A, packets, ttr, delta_time, with_tqdm=False):
     
+    if with_tqdm:
+        pbar = tqdm(total = packets.shape[0])
+
     check_nodes_connectivity(A)
     N = A.shape[0]
     nodes = get_nodes(N, packets)
@@ -258,10 +262,15 @@ def greedy_routing(A, packets, ttr, delta_time):
             if pts.next_hop == pts.destination:
                 arrived_packets += 1
                 final_packets.append(pts)
+
+                if with_tqdm:
+                    pbar.update(1)
             
             #else append it to the queue of the reciever
             else:
                 nodes[pts.next_hop].packets.append(pts)
                 
-        
+    if with_tqdm:
+        pbar.close()
+
     return final_packets
