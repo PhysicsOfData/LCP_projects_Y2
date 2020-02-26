@@ -1,3 +1,4 @@
+from scipy.sparse.csgraph import dijkstra
 ###DELAY FUNCTION###
 # 
 ##This function takes in input 3 parameters: 
@@ -38,11 +39,26 @@ def delay(A, scheduling,routing,n_pkts, T_tx):
 
 ###deviations: given an optimal routing (that in our case is the one determined by Dijkstra) this function returns 
 #the fraction of times a packet doesn't follow the route which was pre-established by the algorithm
-def deviations(optimal,routing,n_pkts):
-    dev = 0
-    for node in routing:
-        dev = dev + sum([1 for path in node if path != optimal[path[0]][path[-1]]])
-    return dev/n_pkts
+def deviations(A, packets):
+    
+    indices = [packet.destination for packet in packets]
+    _, predecessors = dijkstra(A, directed=False, indices=indices, return_predecessors=True)
+    n_deviations = 0
+    
+    for packet in packets:
+        #print(packets)
+        route = packet.route
+        correct = True
+        for i in range(len(route) - 2, -1, -1):
+            #if the route is correct from the second hop onward than it must
+            #be correct because haveing additional hops would increase the distance
+            #print(correct, route[i] != predecessors[packet.destination, route[i+1]])
+            if correct and route[i] != predecessors[packet.destination, route[i + 1]]:
+                correct = False
+                n_deviations += 1
+
+
+    return n_deviations/len(packets)
 
 ###throughput function
 #the throughput enables us to evaluate the performance of our routing algorithm 

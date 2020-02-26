@@ -41,13 +41,15 @@ def find_next_interval(current_time, delta_time, e2e, distances):
         delta_e2e = np.ceil(e2e / delta_time)
         
         #keep increasing i while either the max length is reached or a good interval is found
-        while i + delta_e2e < distances.shape[0] and not check_interval(distances, i, i + delta_e2e):
+        while not check_interval(distances, i, i + delta_e2e):
+            if i + delta_e2e >= distances.shape[0]:
+                raise Exception("One packet cannot be sent before the maximum time")
             i += 1
         
         return i * delta_time
 
 #used to find the next node and the arrival times
-def find_next(starting_node, previous, times, earth=0):
+def find_next(starting_node, previous, times, max_time, earth=0):
     
     result = earth
     current = earth
@@ -55,6 +57,9 @@ def find_next(starting_node, previous, times, earth=0):
     while current != starting_node:
         result = current
         current = int(previous[current])
+    
+    if times[result] > max_time:
+        raise Exception("Maximum time reached")
         
     return result, times[result]
 
@@ -71,6 +76,7 @@ def DTN_dijkstra(A, starting_node, starting_time, ttr, delta_time, earth = 0):
     #setting the arrival time of the packet to each node to infinity
     distances = np.ones(N) * np.inf
     distances[starting_node] = starting_time
+    max_time = A.shape[2] * delta_time
     
     current = starting_node
     visited_nodes = 0
@@ -127,7 +133,7 @@ def DTN_dijkstra(A, starting_node, starting_time, ttr, delta_time, earth = 0):
         
         current = sorting_indexes[visited_nodes]
     
-    return find_next(starting_node, previous, distances, earth)
+    return find_next(starting_node, previous, distances, max_time, earth)
 
     #returns the queues of packets at each node
 def get_nodes(N, packets):
@@ -180,7 +186,6 @@ def dijkstra_on_nodes(A, nodes, first_free_moment, ttr, delta_time):
                 delta_time, 
                 earth = nodes[i].packets[0].destination
             )
-            
             #update the information of the packet based on dijikstra result
             nodes[i].packets[0].next_hop = int(next_hop)
             nodes[i].packets[0].arrival_time = arrival_time
@@ -227,6 +232,11 @@ def greedy_routing(A, packets, ttr, delta_time, with_tqdm=False):
         nodes.sort(key = sorting_function)
         #packet to be eventually sent
         pts = nodes[0].packets[0]
+        
+        #print("arrival time", pts.arrival_time)
+        # print("id", pts.id)
+        # print("2 arrival time", nodes[1].packets[0].arrival_time)
+        # print("2 id", nodes[1].packets[0].id)
         #boolean value that tells if the packet was sent or not
         sent = False
         

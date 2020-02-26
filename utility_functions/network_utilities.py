@@ -101,7 +101,7 @@ def disable_links(A,total_time,delta_t,mode="light",priority="random", custom_n_
     
     for link in disabled_links:
         start = np.random.randint(0,n_updates)
-        end = start + int(np.ceil(np.random.choice(offtimes) * total_time / n_updates))  #offtime expressed in number of updates
+        end = start + int(np.ceil(np.random.choice(offtimes) / delta_t))  #offtime expressed in number of updates
         
         if(False):   # TEST
             print(link)
