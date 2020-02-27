@@ -18,7 +18,7 @@ def get_propagation_times(At):
 # sender = node that sends packets
 #receiver = node that recives packets
 def is_arrive(At, sender, receiver, t, times):
-    propagation_t = np.min(At[sender, receiver, :])
+    propagation_t = times["tp"][sender, receiver]
     total_time = times["ttx"] + propagation_t + t
     
     if total_time > At.shape[2]*times["slot"]:
@@ -41,7 +41,7 @@ def set_vulnerable_time(At, sender, receiver, t, times):
     vulnerable_receiver = times["vulnerable"][receiver]
     
     if is_arrive(At, sender,receiver,t, times):
-        vulnerable_receiver = t + np.min(At[sender, receiver, :])
+        vulnerable_receiver = t + times["tp"][sender, receiver]
     
     
     return vulnerable_sender, vulnerable_receiver
@@ -53,9 +53,9 @@ def set_vulnerable_time(At, sender, receiver, t, times):
 # t = current time
 # sender = node that sends packets
 #receiver = node that recives packets
-def is_collision(At, sender, receiver, t, times):
+def is_collision(sender, receiver, t, times):
     
-    propagation_t = np.min(At[sender, receiver, :])
+    propagation_t = times["tp"][sender, 0]
     t_receiver = t + propagation_t
     
     #if the starting time is withing a transmission time from the vulnerable time
@@ -85,7 +85,7 @@ def add_packet(At, t, sender, times, n_packet, packet_trace):
             if (
                     not packet in packet_trace[receiver] and 
                     check_link(At, sender, receiver, time, times) and 
-                    not is_collision(At, sender, receiver, time, times)
+                    not is_collision(sender, receiver, time, times)
                ):
                 times["vulnerable"][[sender,receiver]] = set_vulnerable_time(
                     At, 
@@ -101,7 +101,7 @@ def add_packet(At, t, sender, times, n_packet, packet_trace):
                     packet_trace[receiver].append(packet)
                     
                     #using receiver-1 because packet_time does not contain the earth
-                    tp = np.min(At[receiver, sender, :])
+                    tp = times["tp"][sender, receiver]
                     ttx = times["ttx"]
                     
                     if (times["packet"][packet][receiver-1] == 0):
@@ -124,15 +124,16 @@ def arrive_to_earth(At, t, sender, times, n_packet, packet_trace, packet_arrive)
     time = t
     packet_counter = 1
     for packet in packets:
-        if not is_collision(At, sender, 0, time, times):
+        if not is_collision(sender, 0, time, times):
             times["vulnerable"][[sender, 0]] = set_vulnerable_time(At, sender, 0, time, times)
             
             if is_arrive(At, sender, 0, time, times):
                 n_packet[sender].remove(packet)
+                n_packet[0].append(packet)
                   
                 packet_arrive.append(int(packet))
                 ttx = times["ttx"]
-                tp = np.min(At[sender, 0, :])
+                tp = times["tp"][sender, 0]
                 new_time = times["packet"][packet,sender-1] + packet_counter * ttx + tp 
                 times["packet"][packet][sender-1] = new_time
                 time = time + times["ttx"]
@@ -171,7 +172,7 @@ def epidemic(At, transmission_time, slot_time, packets):
     n_packet_tot = packets.shape[0] 
     n_packet = convert_packets(packets, n_node_tot) 
     #this is used to copy the list
-    packet_trace = n_packet[:] 
+    packet_trace = [queue[:] for queue in n_packet]
     
     packet_arrive = []
     vulnerable_time = np.zeros(n_node_tot)
@@ -181,31 +182,37 @@ def epidemic(At, transmission_time, slot_time, packets):
         "ttx": transmission_time,
         "vulnerable": vulnerable_time,
         "slot": slot_time,
-        "packet": packet_time
+        "packet": packet_time,
+        "tp": get_propagation_times(At) 
     }
 
 
     #start time
     for t in np.arange(0,At.shape[2]*slot_time,0.5):
+
+        #if all packet are received exit the cycle
+        if len(n_packet[0]) == n_packet_tot:
+            return packet_arrive, packet_time, times["vulnerable"]
+
         for i in range(1, n_node_tot):
             #print('tempo che scorre',t)
-            if (np.array(n_packet[i])).size != 0:
+            if len(n_packet[i]) != 0:
                 if t != 0:
                     for p in n_packet[i]:
                         if packet_time[p, i-1] <= t:
-                            packet_time[p, i-1] = packet_time[p, i-1] + 0.5
+                            packet_time[p, i-1] += 0.5
             
                 # if the link to erath is down 
                 if not check_link(At, i, 0, t, times):
                     if ( (t >= vulnerable_time[i] + transmission_time) == True):
                     
                         times["vulnerable"], n_packet, packet_trace, times["packet"] = add_packet(
-                            At,
-                            t,
-                            i, 
-                            times,
-                            n_packet,
-                            packet_trace
+                                At,
+                                t,
+                                i, 
+                                times,
+                                n_packet,
+                                packet_trace
                         )
                     
                 else:
@@ -214,17 +221,16 @@ def epidemic(At, transmission_time, slot_time, packets):
                     
                         #this is all just one line
                         times["vulnerable"], n_packet, packet_trace, packet_arrive, times["packet"] = arrive_to_earth(
-                            At,
-                            t,
-                            i,
-                            times,
-                            n_packet,
-                            packet_trace,
-                            packet_arrive
+                                At,
+                                t,
+                                i,
+                                times,
+                                n_packet,
+                                packet_trace,
+                                packet_arrive
                         )
                     
         if len(n_packet) == 0:
             break
 
-
-    return packet_arrive, packet_time
+    return packet_arrive, packet_time, times["vulnerable"]

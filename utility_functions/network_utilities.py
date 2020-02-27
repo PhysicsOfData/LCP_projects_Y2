@@ -122,5 +122,4 @@ def adjacency_matrix(nodes, tau_max, c = 3e8):
     
     A = np.linalg.norm(n1-n2, axis = 2)/c
     A[A>tau_max] = np.inf
-    
     return A
