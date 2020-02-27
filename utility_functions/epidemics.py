@@ -140,3 +140,91 @@ def arrive_to_earth(At, t, sender, times, n_packet, packet_trace, packet_arrive)
                 
     return times["vulnerable"], n_packet, packet_trace, packet_arrive, times["packet"]
 
+
+# At = adjacent matrix
+# A = propagation matrix
+# ttr = trasmission time
+# delta_time = slot_time
+# packets
+
+def convert_packets(packets, n_nodes):
+    
+    n_packet = [[] for _ in range(n_nodes)]
+    for i in range(len(packets)):        
+        n_packet[packets[i,0]].append(i)
+
+    return n_packet
+
+# n_packet = every list is the code of node with the same index, and contains the ID packet that we want to send
+# n_node_tot = number of nodes, in our case is 10 including the earth
+# packet_trace = keep the trace of the road followed by each package
+# trasmision_time = time to trasmit a single packet
+# packet_arrive = [ID number of packets arrive to earth]
+# packet_arrive_dupl = [ID number of all packets arrive to earth]
+# vulnerable_time = [[start_time, finshed_time] collect the vunlerable time for each node]
+# slot_time = duration of each interval time
+# packet_time = each list rappresent a single packet: the value is the time it takes to get to the earth, the index indicates
+# from which node the packet is send to earth.
+def epidemic(At, transmission_time, slot_time, packets):
+
+    n_node_tot = At.shape[0]
+    n_packet_tot = packets.shape[0] 
+    n_packet = convert_packets(packets, n_node_tot) 
+    #this is used to copy the list
+    packet_trace = n_packet[:] 
+    
+    packet_arrive = []
+    vulnerable_time = np.zeros(n_node_tot)
+    #slot_time = delta_time
+    packet_time = np.zeros((n_packet_tot, n_node_tot-1))
+    times = {
+        "ttx": transmission_time,
+        "vulnerable": vulnerable_time,
+        "slot": slot_time,
+        "packet": packet_time
+    }
+
+
+    #start time
+    for t in np.arange(0,At.shape[2]*slot_time,0.5):
+        for i in range(1, n_node_tot):
+            #print('tempo che scorre',t)
+            if (np.array(n_packet[i])).size != 0:
+                if t != 0:
+                    for p in n_packet[i]:
+                        if packet_time[p, i-1] <= t:
+                            packet_time[p, i-1] = packet_time[p, i-1] + 0.5
+            
+                # if the link to erath is down 
+                if not check_link(At, i, 0, t, times):
+                    if ( (t >= vulnerable_time[i] + transmission_time) == True):
+                    
+                        times["vulnerable"], n_packet, packet_trace, times["packet"] = add_packet(
+                            At,
+                            t,
+                            i, 
+                            times,
+                            n_packet,
+                            packet_trace
+                        )
+                    
+                else:
+                
+                    if t >= vulnerable_time[i] + transmission_time:
+                    
+                        #this is all just one line
+                        times["vulnerable"], n_packet, packet_trace, packet_arrive, times["packet"] = arrive_to_earth(
+                            At,
+                            t,
+                            i,
+                            times,
+                            n_packet,
+                            packet_trace,
+                            packet_arrive
+                        )
+                    
+        if len(n_packet) == 0:
+            break
+
+
+    return packet_arrive, packet_time
