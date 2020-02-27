@@ -33,8 +33,9 @@ def plot_network(nodes):
     ax.scatter(nodes[0,0],nodes[0,1],nodes[0,2],color="red",s=100)   #Earth
     plt.show()
 
-
 ## disable some links for a certain amount of time
+##
+## delta_t = time between steps (in seconds)
 ##
 ## modes:
 ## light mode: few links, short time
@@ -46,11 +47,13 @@ def plot_network(nodes):
 ## prioritize disabling of links involving nodes near or far from Earth
 ## 
 ## custom_n_targets = number of targets
-## custom_offtimes: array containing possible values for off times expressed in number of updates of A
+## custom_offtimes: array containing possible values for off times (in seconds)
 
-def disable_links(A,n_updates, mode="light",priority="random", custom_n_targets = None, custom_offtimes = None):
+def disable_links(A,total_time,delta_t,mode="light",priority="random", custom_n_targets = None, custom_offtimes = None):
 
     n = A.shape[0]
+    n_updates = int(np.ceil(total_time/delta_t))
+    time_max = np.max(A[0,:][np.isfinite(A[0,:])])    #propagation time from the furthest node to Earth, used as a reference
     
     At = np.repeat(A[:, :, np.newaxis], n_updates, axis=2) #add temporal dimension
 
@@ -68,25 +71,27 @@ def disable_links(A,n_updates, mode="light",priority="random", custom_n_targets 
     possible_links = np.array([[x,y] for x in t_nodes for y in range(n) if x!=y if A[x,y]!=np.inf if [y,x] not in possible_links])
 
     if mode == "light":  
-        n_targets = possible_links.shape[0]//3
-        offtimes = [n_updates//10]   # selected links stay off for around 1/10 of the total time
+        rate = possible_links.shape[0] * 0.05  #disable 5% of possible links every time_max 
+        offtimes = [time_max * 0.5]   #selected links stay off for around 0.5 * time_max
             
     elif mode == "heavy":
-        n_targets = possible_links.shape[0]//3
-        offtimes = [n_updates//3]
+        rate = possible_links.shape[0] * 0.05  #disable 5% of possible links every time_max 
+        offtimes = [time_max * 2]   #selected links stay off for around 2 * time_max
         
     elif mode == "unstable":
-        n_targets = possible_links.shape[0]*3//4
-        offtimes = [n_updates//10]
+        rate = possible_links.shape[0] * 0.2  #disable 20% of possible links every time_max 
+        offtimes = [time_max * 0.25]   #selected links stay off for around 0.25 * time_max
         
     elif mode == "extreme":
-        n_targets = possible_links.shape[0]*3//4
-        offtimes = [n_updates//3]
+        rate = possible_links.shape[0] * 0.2  #disable 20% of possible links every time_max 
+        offtimes = [time_max * 2]   #selected links stay off for around 2 * of time_max
     
-    else:   #use light mode if a wrong 
+    else:   #use light mode in case of a wrong "mode" value
         print("Wrong value for \"mode\", light mode will be used")
-        n_targets = possible_links.shape[0]//3
-        offtimes = [n_updates//10]
+        rate = possible_links.shape[0] * 0.05  #disable 5% of possible links every time_max 
+        offtimes = [time_max * 0.5]   #selected links stay off for around 0.5 * time_max
+        
+    n_targets = int(np.ceil(rate * total_time/time_max))
     
     if custom_n_targets != None:
         n_targets = custom_n_targets
@@ -98,7 +103,7 @@ def disable_links(A,n_updates, mode="light",priority="random", custom_n_targets 
     
     for link in disabled_links:
         start = np.random.randint(0,n_updates)
-        end = start + np.random.choice(offtimes)
+        end = start + int(np.ceil(np.random.choice(offtimes) * total_time / n_updates))  #offtime expressed in number of updates
         
         if(False):   # TEST
             print(link)
