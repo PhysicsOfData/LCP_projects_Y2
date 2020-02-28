@@ -77,7 +77,7 @@ def disable_links(A,total_time,delta_t,mode="light",priority="random", custom_n_
         offtimes = [time_max * 2]   #selected links stay off for around 2 * time_max
         
     elif mode == "unstable":
-        rate = possible_links.shape[0] * 0.2  #disable 20% of possible links every time_max 
+        rate = possible_links.shape[0] * 0.3  #disable 20% of possible links every time_max 
         offtimes = [time_max * 0.25]   #selected links stay off for around 0.25 * time_max
         
     elif mode == "extreme":
@@ -120,4 +120,8 @@ def adjacency_matrix(nodes, tau_max, c = 3e8):
     
     A = np.linalg.norm(n1-n2, axis = 2)/c
     A[A>tau_max] = np.inf
+<<<<<<< HEAD
+=======
+    
+>>>>>>> Group12
     return A
