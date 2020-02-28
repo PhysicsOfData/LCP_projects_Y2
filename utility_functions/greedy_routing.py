@@ -69,7 +69,7 @@ def find_next(starting_node, previous, times, max_time, earth=0):
 #ttr = transmission time
 #delta_time = timestep dimension
 #earth = earth node
-def DTN_dijkstra(A, starting_node, starting_time, ttr, delta_time, earth = 0):
+def DTN_dijkstra(A, starting_node, starting_time, ttr, tps, delta_time, earth = 0):
     
     N = A.shape[0]
     
@@ -107,12 +107,12 @@ def DTN_dijkstra(A, starting_node, starting_time, ttr, delta_time, earth = 0):
         for i in range(N):
             
             #computing e2e delay as tp + ttr
-            tp = np.min(A[current, i, :])
+            tp = tps[current, i]
             
             if tp == np.inf:
                 new_dists[i] = np.inf
             else:
-                e2e = np.min(A[current, i, :]) + ttr
+                e2e = tp + ttr
             
                 #finding out when the packet can leave the current node to reach the next one
                 next_good = find_next_interval(current_time, delta_time, e2e, A[current, i, :])
@@ -171,7 +171,7 @@ nodes = list of Node objects
 first_free_moment = array indicating the first available moment for a node to send/recieve 
 a packet
 '''
-def dijkstra_on_nodes(A, nodes, first_free_moment, ttr, delta_time):
+def dijkstra_on_nodes(A, nodes, first_free_moment, ttr, tps, delta_time):
     
     #for each node
     for i in range(len(nodes)):
@@ -185,6 +185,7 @@ def dijkstra_on_nodes(A, nodes, first_free_moment, ttr, delta_time):
                 i, 
                 first_free_moment[i], 
                 ttr, 
+                tps,
                 delta_time, 
                 earth = nodes[i].packets[0].destination
             )
@@ -197,10 +198,10 @@ def dijkstra_on_nodes(A, nodes, first_free_moment, ttr, delta_time):
 #checks if there is one node that is completely isolated from the rest
 #note that this does not notify the case where two nodes are connected
 #but are separated from the rest
-def check_nodes_connectivity(A):
+def check_nodes_connectivity(tps):
     
     #matrix saying if an edge is up or not
-    connectivity = np.min(A, axis = 2)
+    connectivity = tps
     
     #setting the diagonal to inf so later i can check if a whole column is equal to inf
     connectivity[connectivity == 0] = np.inf
@@ -215,7 +216,8 @@ def greedy_routing(A, packets, ttr, delta_time, with_tqdm=False):
     if with_tqdm:
         pbar = tqdm(total = packets.shape[0])
 
-    check_nodes_connectivity(A)
+    tps = np.min(A, axis = 2)
+    check_nodes_connectivity(tps)
     N = A.shape[0]
     nodes = get_nodes(N, packets)
     #at the beginning all of the nodes can transmit a packet theoretically
@@ -229,7 +231,7 @@ def greedy_routing(A, packets, ttr, delta_time, with_tqdm=False):
     while arrived_packets != packets.shape[0]:
         
         #find out the next step and the arrival time of all the first packets in the queues
-        nodes = dijkstra_on_nodes(A, nodes, first_free_moment, ttr, delta_time)
+        nodes = dijkstra_on_nodes(A, nodes, first_free_moment, ttr, tps, delta_time)
         #sort the nodes from the one that has the packet that would reach first the next hop
         nodes.sort(key = sorting_function)
         #packet to be eventually sent
@@ -243,7 +245,7 @@ def greedy_routing(A, packets, ttr, delta_time, with_tqdm=False):
         sent = False
         
         #propagation time from current node to next hop
-        tp = np.min(A[pts.next_hop, nodes[0].id])        
+        tp = tps[pts.next_hop, nodes[0].id]
         
         #if the first bit of the packet reaches the reciever when the reiever is free
         if first_free_moment[pts.next_hop] <= pts.arrival_time - ttr:
