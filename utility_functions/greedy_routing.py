@@ -16,7 +16,7 @@ def check_time_step(A, time):
 #start = starting time
 #end = ending time
 def check_interval(weights, start, end):
-    return np.sum(weights[int(start):int(end)] == np.inf) == 0 
+    return np.max(weights[int(start):int(end)]) != np.inf 
 
 #finds the next useful interval to send the packet if the link is down
 #current_time = earlyest time when the packet can be sent
@@ -49,19 +49,33 @@ def find_next_interval(current_time, delta_time, e2e, distances):
         return i * delta_time
 
 #used to find the next node and the arrival times
-def find_next(starting_node, previous, times, max_time, earth=0):
+def find_next(At, starting_node, previous, times, delta_time, starting_time, max_time, earth=0):
     
     result = earth
     current = earth
-    
+    good_until = [] 
+
     while current != starting_node:
         result = current
         current = int(previous[current])
-    
+
+        #time slot when the node is reached
+        current_delta = math.floor(times[current]/delta_time)
+        #evolution of the link between source and destination from current_delta onwards 
+        future_evolution = At[current, result, current_delta:]
+
+        #if the link is disabled in the future
+        if np.max(future_evolution) == np.inf:
+            #the maximum sending time is equal to the starting time + the remaining time after the packet arrived
+            max_sending_time = starting_time + (current_delta + np.argmax(future_evolution == np.inf)) * delta_time - times[current] 
+            good_until.append(max_sending_time)
+        else:
+            good_until.append(max_time)
+
     if times[result] > max_time:
         raise Exception("Maximum time reached")
         
-    return result, times[result]
+    return result, times[result], min(good_until)
 
 #performs a modified version of the dijkstra algorithm that adapts to this specific problem
 #A = adjacency matrix
@@ -133,7 +147,7 @@ def DTN_dijkstra(A, starting_node, starting_time, ttr, tps, delta_time, earth = 
         
         current = sorting_indexes[visited_nodes]
     
-    return find_next(starting_node, previous, distances, max_time, earth)
+    return find_next(A, starting_node, previous, distances, delta_time, starting_time, max_time, earth)
 
     #returns the queues of packets at each node
 def get_nodes(N, packets):
@@ -171,29 +185,41 @@ nodes = list of Node objects
 first_free_moment = array indicating the first available moment for a node to send/recieve 
 a packet
 '''
-def dijkstra_on_nodes(A, nodes, first_free_moment, ttr, tps, delta_time):
+def dijkstra_on_nodes(A, nodes, first_free_moment, ttr, tps, delta_time, next_hops, valid):
     
     #for each node
-    for i in range(len(nodes)):
+    for source in range(len(nodes)):
         
         #if the node is not empty
-        if len(nodes[i].packets) > 0:
-            
-            #compute dijkstra on the first node of the queue
-            next_hop, arrival_time = DTN_dijkstra(
-                A, 
-                i, 
-                first_free_moment[i], 
-                ttr, 
-                tps,
-                delta_time, 
-                earth = nodes[i].packets[0].destination
-            )
-            #update the information of the packet based on dijikstra result
-            nodes[i].packets[0].next_hop = int(next_hop)
-            nodes[i].packets[0].arrival_time = arrival_time
+        if len(nodes[source].packets) > 0:
+            destination = nodes[source].packets[0].destination
 
-    return nodes
+            #if the previous route is still valid then just update next_hop and arrival_time
+            if valid[source, destination] > first_free_moment[source]:
+                next_hop = int(next_hops[source, destination])
+                nodes[source].packets[0].next_hop = next_hop 
+                nodes[source].packets[0].arrival_time = first_free_moment[source] + tps[source, next_hop] + ttr
+
+            else: 
+                #compute dijkstra on the first node of the queue
+                next_hop, arrival_time, valid_until = DTN_dijkstra(
+                    A, 
+                    source, 
+                    first_free_moment[source], 
+                    ttr, 
+                    tps,
+                    delta_time, 
+                    earth = destination 
+                )
+                #update the information of the packet based on dijikstra result
+                nodes[source].packets[0].next_hop = int(next_hop)
+                nodes[source].packets[0].arrival_time = arrival_time
+
+                #update the best route from source to destination and its validity
+                next_hops[source, destination] = next_hops[destination, source] = next_hop
+                valid[source, destination] = valid[destination, source] = valid_until 
+
+    return nodes, next_hops, valid
 
 #checks if there is one node that is completely isolated from the rest
 #note that this does not notify the case where two nodes are connected
@@ -222,31 +248,31 @@ def greedy_routing(A, packets, ttr, delta_time, with_tqdm=False):
     nodes = get_nodes(N, packets)
     #at the beginning all of the nodes can transmit a packet theoretically
     first_free_moment = np.zeros(N)
-    
+
+    #data needed to save some computation
+    #cell i,j constains the best next hop between i and j
+    next_hops = np.ones((N, N)) * (-1) 
+    #defines for how long the path will be the best
+    valid = np.ones((N, N)) * (-1) 
+
     #number of packets that reached their destinatio
     arrived_packets = 0
     final_packets = []
     
     #while some packets aren't arrived yet
     while arrived_packets != packets.shape[0]:
-        
         #find out the next step and the arrival time of all the first packets in the queues
-        nodes = dijkstra_on_nodes(A, nodes, first_free_moment, ttr, tps, delta_time)
+        nodes, next_hops, valid = dijkstra_on_nodes(A, nodes, first_free_moment, ttr, tps, delta_time, next_hops, valid)
         #sort the nodes from the one that has the packet that would reach first the next hop
         nodes.sort(key = sorting_function)
         #packet to be eventually sent
         pts = nodes[0].packets[0]
         
-        #print("arrival time", pts.arrival_time)
-        # print("id", pts.id)
-        # print("2 arrival time", nodes[1].packets[0].arrival_time)
-        # print("2 id", nodes[1].packets[0].id)
         #boolean value that tells if the packet was sent or not
         sent = False
         
         #propagation time from current node to next hop
         tp = tps[pts.next_hop, nodes[0].id]
-        
         #if the first bit of the packet reaches the reciever when the reiever is free
         if first_free_moment[pts.next_hop] <= pts.arrival_time - ttr:
             
