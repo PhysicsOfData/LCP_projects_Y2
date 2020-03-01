@@ -51,7 +51,7 @@ def deviations(A, packets):
         correct = True
         for i in range(len(route) - 2, -1, -1):
             #if the route is correct from the second hop onward than it must
-            #be correct because haveing additional hops would increase the distance
+            #be correct because having additional hops would increase the distance
             #print(correct, route[i] != predecessors[packet.destination, route[i+1]])
             if correct and route[i] != predecessors[packet.destination, route[i + 1]]:
                 correct = False

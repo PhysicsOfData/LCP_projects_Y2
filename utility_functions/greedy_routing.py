@@ -12,14 +12,14 @@ def check_time_step(A, time):
         raise Exception("Maximum time limit exceded")
 
 # used to check if the link becomes unavailable before the packet is fully transmitted
-#weigths = time series of the weight of the considered link
+#weights = time series of the weight of the considered link
 #start = starting time
 #end = ending time
 def check_interval(weights, start, end):
     return np.max(weights[int(start):int(end)]) != np.inf 
 
 #finds the next useful interval to send the packet if the link is down
-#current_time = earlyest time when the packet can be sent
+#current_time = earliest time when the packet can be sent
 #delta_time = time interval 
 #e2e = end to end delay
 #distances = weights of the edge during time
