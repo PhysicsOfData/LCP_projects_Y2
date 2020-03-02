@@ -6,9 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 ### Generates a random network of n nodes (the first one corresponds to earth)
 ### r = max distance
 
-def generate_network(n,r_max,seed=100,polar = False):
-    
-    np.random.seed(seed)
+def generate_network(n,r_max,polar = False):
     
     r = np.random.rand(n,1)*r_max
     r[0] = 0 #Earth
@@ -79,7 +77,7 @@ def disable_links(A,total_time,delta_t,mode="light",priority="random", custom_n_
         offtimes = [time_max * 2]   #selected links stay off for around 2 * time_max
         
     elif mode == "unstable":
-        rate = possible_links.shape[0] * 0.2  #disable 20% of possible links every time_max 
+        rate = possible_links.shape[0] * 0.3  #disable 20% of possible links every time_max 
         offtimes = [time_max * 0.25]   #selected links stay off for around 0.25 * time_max
         
     elif mode == "extreme":
@@ -103,7 +101,7 @@ def disable_links(A,total_time,delta_t,mode="light",priority="random", custom_n_
     
     for link in disabled_links:
         start = np.random.randint(0,n_updates)
-        end = start + int(np.ceil(np.random.choice(offtimes) * total_time / n_updates))  #offtime expressed in number of updates
+        end = start + int(np.ceil(np.random.choice(offtimes) / delta_t))  #offtime expressed in number of updates
         
         if(False):   # TEST
             print(link)
