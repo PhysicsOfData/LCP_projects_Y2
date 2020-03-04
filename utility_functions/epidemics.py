@@ -41,7 +41,8 @@ def set_vulnerable_time(At, sender, receiver, t, times):
     vulnerable_receiver = times["vulnerable"][receiver]
     
     if is_arrive(At, sender,receiver,t, times):
-        vulnerable_receiver = t + times["tp"][sender, receiver]
+        vulnerable_sender = max(t, vulnerable_receiver - times["tp"][sender, receiver] - times["ttx"])
+        vulnerable_receiver = max(t + times["tp"][sender, receiver], vulnerable_receiver + times["ttx"])
     
     
     return vulnerable_sender, vulnerable_receiver
