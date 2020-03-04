@@ -162,7 +162,7 @@ def convert_packets(packets, n_nodes):
 # trasmision_time = time to trasmit a single packet
 # packet_arrive = [ID number of packets arrive to earth]
 # packet_arrive_dupl = [ID number of all packets arrive to earth]
-# vulnerable_time = [[start_time, finshed_time] collect the vunlerable time for each node]
+# vulnerable_time = [start_time,  collect the vunlerable time for each node]
 # slot_time = duration of each interval time
 # packet_time = each list rappresent a single packet: the value is the time it takes to get to the earth, the index indicates
 # from which node the packet is send to earth.
@@ -188,7 +188,7 @@ def epidemic(At, transmission_time, slot_time, packets):
 
 
     #start time
-    for t in np.arange(0,At.shape[2]*slot_time,0.5):
+    for t in np.arange(0,At.shape[2]*slot_time,transmission_time):
 
         #if all packet are received exit the cycle
         if len(n_packet[0]) == n_packet_tot:
@@ -200,7 +200,7 @@ def epidemic(At, transmission_time, slot_time, packets):
                 if t != 0:
                     for p in n_packet[i]:
                         if packet_time[p, i-1] <= t:
-                            packet_time[p, i-1] += 0.5
+                            packet_time[p, i-1] += transmission_time
             
                 # if the link to erath is down 
                 if not check_link(At, i, 0, t, times):
