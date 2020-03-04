@@ -1,4 +1,5 @@
 import numpy as np
+from classes import Packet, Node
 from tqdm import tqdm
 import math
 
@@ -74,7 +75,7 @@ def is_collision(sender, receiver, t, times):
 #if the link is okay and the packet reaches destination
 # x = sender node in adjacent matrix
 
-def add_packet(At, t, sender, times, n_packet, packet_trace):
+def add_packet(At, t, sender, times, n_packet, packet_trace, anim_nodes):
 
     n_node_tot = At.shape[0]
     gen = [i for i in range(1,n_node_tot) if i != sender]
@@ -98,7 +99,7 @@ def add_packet(At, t, sender, times, n_packet, packet_trace):
                 )
 
                 if is_arrive(At, sender,receiver,time, times):
-                    
+                     
                     n_packet[receiver].append(packet)
                     packet_trace[receiver].append(packet)
                     
@@ -112,15 +113,24 @@ def add_packet(At, t, sender, times, n_packet, packet_trace):
                         new_time = times["packet"][packet][receiver-1] + packet_counter*ttx + tp
                         times["packet"][packet][receiver-1] = new_time
                     time = time + times["ttx"]
+
+                    #data used for the animation it is just tracking all of the routes
+                    pack = Packet(packet, 0)
+                    pack.source = sender 
+                    pack.route.append(receiver)
+                    pack.arrival_times.append(packet_counter*ttx + tp + time_1)
+                    pack.arrival_time = packet_counter*ttx + tp + time_1
+                    anim_nodes[sender][packet].append(pack)
                     
                     packet_counter += 1
+
     return times["vulnerable"], n_packet, packet_trace, times["packet"]
                     
                     
                     
 #send the packets to earth if the link is up and update n_packet
 # x = sender node in adjacent matrix
-def arrive_to_earth(At, t, sender, times, n_packet, packet_trace, packet_arrive):
+def arrive_to_earth(At, t, sender, times, n_packet, packet_trace, packet_arrive, anim_nodes):
     
     packets = n_packet[sender]
     time = t
@@ -132,7 +142,7 @@ def arrive_to_earth(At, t, sender, times, n_packet, packet_trace, packet_arrive)
             if is_arrive(At, sender, 0, time, times):
                 n_packet[sender].remove(packet)
                 n_packet[0].append(packet)
-                  
+
                 packet_arrive.append(int(packet))
                 ttx = times["ttx"]
                 tp = times["tp"][sender, 0]
@@ -141,6 +151,13 @@ def arrive_to_earth(At, t, sender, times, n_packet, packet_trace, packet_arrive)
                 time = time + times["ttx"]
                 packet_counter += 1
                 
+                pack = Packet(packet, 0)
+                pack.source = sender
+                pack.route.append(0)
+                pack.arrival_times.append(new_time)
+                pack.arrival_time = new_time
+                anim_nodes[sender][packet].append(pack)
+
     return times["vulnerable"], n_packet, packet_trace, packet_arrive, times["packet"]
 
 
@@ -153,10 +170,12 @@ def arrive_to_earth(At, t, sender, times, n_packet, packet_trace, packet_arrive)
 def convert_packets(packets, n_nodes):
     
     n_packet = [[] for _ in range(n_nodes)]
+    anim_nodes = [[[] for j in range(packets.shape[0])] for i in range(n_nodes)] 
+
     for i in range(len(packets)):        
         n_packet[packets[i,0]].append(i)
 
-    return n_packet
+    return n_packet, anim_nodes 
 
 # n_packet = every list is the code of node with the same index, and contains the ID packet that we want to send
 # n_node_tot = number of nodes, in our case is 10 including the earth
@@ -168,11 +187,11 @@ def convert_packets(packets, n_nodes):
 # slot_time = duration of each interval time
 # packet_time = each list rappresent a single packet: the value is the time it takes to get to the earth, the index indicates
 # from which node the packet is send to earth.
-def epidemic(At, transmission_time, slot_time, packets):
-
+def epidemic(At, transmission_time, slot_time, packets, return_anim = False):
+         
     n_node_tot = At.shape[0]
     n_packet_tot = packets.shape[0] 
-    n_packet = convert_packets(packets, n_node_tot) 
+    n_packet, anim_nodes = convert_packets(packets, n_node_tot) 
     #this is used to copy the list
     packet_trace = [queue[:] for queue in n_packet]
     
@@ -194,6 +213,13 @@ def epidemic(At, transmission_time, slot_time, packets):
 
         #if all packet are received exit the cycle
         if len(np.unique(n_packet[0])) == n_packet_tot:
+
+            # returning data for the animation if requested
+            if return_anim:
+                anim_packets = get_packets_for_animation(anim_nodes)
+                anim_packets.sort(key = lambda x: x.arrival_time)
+                return packet_arrive, packet_time, times["vulnerable"], anim_packets
+
             return packet_arrive, packet_time, times["vulnerable"]
 
         for i in range(1, n_node_tot):
@@ -214,7 +240,8 @@ def epidemic(At, transmission_time, slot_time, packets):
                                 i, 
                                 times,
                                 n_packet,
-                                packet_trace
+                                packet_trace,
+                                anim_nodes 
                         )
                     
                 else:
@@ -229,10 +256,23 @@ def epidemic(At, transmission_time, slot_time, packets):
                                 times,
                                 n_packet,
                                 packet_trace,
-                                packet_arrive
+                                packet_arrive,
+                                anim_nodes 
                         )
                     
         if len(n_packet) == 0:
             break
 
     return packet_arrive, packet_time, times["vulnerable"]
+
+def get_packets_for_animation(nodes):
+
+    packets = []
+    
+    for node in nodes:
+        for p_type in node:
+            if p_type is not None:
+                for packet in p_type:
+                    packets.append(packet)
+
+    return packets
