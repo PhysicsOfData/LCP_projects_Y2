@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 import math
 
 #check if the link is okay, return true if the link is up, false otherside
@@ -41,8 +42,8 @@ def set_vulnerable_time(At, sender, receiver, t, times):
     vulnerable_receiver = times["vulnerable"][receiver]
     
     if is_arrive(At, sender,receiver,t, times):
-        vulnerable_sender = max(t, vulnerable_receiver - times["tp"][sender, receiver] - times["ttx"])
-        vulnerable_receiver = max(t + times["tp"][sender, receiver], vulnerable_receiver + times["ttx"])
+        vulnerable_sender = max(t + times["ttx"], vulnerable_receiver + times["ttx"] - times["tp"][sender, receiver])
+        vulnerable_receiver = vulnerable_sender + times["tp"][sender, receiver]
     
     
     return vulnerable_sender, vulnerable_receiver
@@ -192,7 +193,7 @@ def epidemic(At, transmission_time, slot_time, packets):
     for t in np.arange(0,At.shape[2]*slot_time,transmission_time):
 
         #if all packet are received exit the cycle
-        if len(n_packet[0]) == n_packet_tot:
+        if len(np.unique(n_packet[0])) == n_packet_tot:
             return packet_arrive, packet_time, times["vulnerable"]
 
         for i in range(1, n_node_tot):
