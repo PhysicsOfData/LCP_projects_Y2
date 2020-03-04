@@ -6,8 +6,8 @@ import numpy as np
 #This function takes in input the times in which packets are recepted at destination and the transmission time
 #It enables us to visualize the moments in which we receive packets
 def pkt_plot(packets, t_tx, axs = None):
-    recept_times = [x.arrival_time for x in packets]
-    end_recept = [x.arrival_time + t_tx for x in packets]
+    recept_times = [x.arrival_time - t_tx for x in packets]
+    end_recept = [x.arrival_time for x in packets]
     seg=[]
     for i in range(len(packets)-1):
         diff= recept_times[i+1]-end_recept[i]
