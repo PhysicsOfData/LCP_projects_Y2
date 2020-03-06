@@ -5,7 +5,11 @@ import numpy as np
 ### pkt_plot function
 #This function takes in input the times in which packets are recepted at destination and the transmission time
 #It enables us to visualize the moments in which we receive packets
-def pkt_plot(packets, t_tx, axs = None):
+def pkt_plot(packets, t_tx, axs = None, seed = None):
+
+    if seed is not None:
+        np.random.seed(seed)
+
     recept_times = [x.arrival_time - t_tx for x in packets]
     end_recept = [x.arrival_time for x in packets]
     seg=[]
