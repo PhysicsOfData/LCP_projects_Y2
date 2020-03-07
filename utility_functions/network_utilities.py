@@ -2,14 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-
 ### Generates a random network of n nodes (the first one corresponds to earth)
 ### r = max distance
 
-def generate_network(n,r_max,seed=100,polar = False):
-    
-    np.random.seed(seed)
-    
+def generate_network(n,r_max,polar = False, seed = None):
+   
+    if seed is not None:
+        np.random.seed(seed)
     r = np.random.rand(n,1)*r_max
     r[0] = 0 #Earth
     theta = np.random.rand(n,1)*4*np.pi - 2*np.pi
@@ -24,15 +23,24 @@ def generate_network(n,r_max,seed=100,polar = False):
     
     return np.hstack((x,y,z))   #cartesian coordinates
 
-
-def plot_network(nodes):
-    
-    fig = plt.figure()
+   
+def plot_network(nodes,sphere=False,r_max=0):
+    fig = plt.figure(figsize=(7,7))
     ax = Axes3D(fig)
     ax.scatter(nodes[1:,0],nodes[1:,1],nodes[1:,2])
     ax.scatter(nodes[0,0],nodes[0,1],nodes[0,2],color="red",s=100)   #Earth
-    plt.show()
+    r = r_max
 
+    if sphere:
+        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+        x = r*np.cos(u)*np.sin(v)
+        y = r*np.sin(u)*np.sin(v)
+        z = r*np.cos(v)
+        ax.plot_wireframe(x, y, z, color="black",alpha = 0.2,linewidths=0.5)
+    
+    plt.show() 
+    return fig,ax
+    
 ## disable some links for a certain amount of time
 ##
 ## delta_t = time between steps (in seconds)
@@ -79,7 +87,7 @@ def disable_links(A,total_time,delta_t,mode="light",priority="random", custom_n_
         offtimes = [time_max * 2]   #selected links stay off for around 2 * time_max
         
     elif mode == "unstable":
-        rate = possible_links.shape[0] * 0.2  #disable 20% of possible links every time_max 
+        rate = possible_links.shape[0] * 0.3  #disable 20% of possible links every time_max 
         offtimes = [time_max * 0.25]   #selected links stay off for around 0.25 * time_max
         
     elif mode == "extreme":
@@ -103,7 +111,7 @@ def disable_links(A,total_time,delta_t,mode="light",priority="random", custom_n_
     
     for link in disabled_links:
         start = np.random.randint(0,n_updates)
-        end = start + int(np.ceil(np.random.choice(offtimes) * total_time / n_updates))  #offtime expressed in number of updates
+        end = start + int(np.ceil(np.random.choice(offtimes) / delta_t))  #offtime expressed in number of updates
         
         if(False):   # TEST
             print(link)
@@ -122,5 +130,5 @@ def adjacency_matrix(nodes, tau_max, c = 3e8):
     
     A = np.linalg.norm(n1-n2, axis = 2)/c
     A[A>tau_max] = np.inf
-    
+
     return A
