@@ -1,7 +1,7 @@
 import numpy as np
 import math
 from classes import Packet, Node
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 
 #used to check if the time exceeds the maximum time of the system
 def check_time_step(A, time):
