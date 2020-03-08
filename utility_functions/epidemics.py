@@ -1,6 +1,6 @@
 import numpy as np
 from classes import Packet, Node
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 import math
 
 #check if the link is okay, return true if the link is up, false otherside
@@ -276,3 +276,14 @@ def get_packets_for_animation(nodes):
                     packets.append(packet)
 
     return packets
+
+def remove_duplicates(packets):
+    packets.sort(key = lambda x:x.id)
+    previous = -1
+    result = []
+    for packet in packets:
+        if previous != packet.id:
+            previous = packet.id
+            result.append(packet)
+    result.sort(key = lambda x:x.arrival_time)
+    return result

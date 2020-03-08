@@ -1,7 +1,7 @@
 import numpy as np
 import math
 from classes import Packet, Node
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 
 #used to check if the time exceeds the maximum time of the system
 def check_time_step(A, time):
@@ -101,7 +101,7 @@ def DTN_dijkstra(A, starting_node, starting_time, ttr, tps, delta_time, earth = 
     
     #if the source is the destination do nothing
     if current == earth:
-        return starting_time, -1
+        return starting_time, -1, np.inf 
     
     #keep going until the shortest path to earth is found
     while current != earth:

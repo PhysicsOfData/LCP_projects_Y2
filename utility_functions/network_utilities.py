@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-
 ### Generates a random network of n nodes (the first one corresponds to earth)
 ### r = max distance
 
@@ -24,15 +23,24 @@ def generate_network(n,r_max,polar = False, seed = None):
     
     return np.hstack((x,y,z))   #cartesian coordinates
 
-
-def plot_network(nodes):
-    
-    fig = plt.figure()
+   
+def plot_network(nodes,sphere=False,r_max=0):
+    fig = plt.figure(figsize=(7,7))
     ax = Axes3D(fig)
     ax.scatter(nodes[1:,0],nodes[1:,1],nodes[1:,2])
     ax.scatter(nodes[0,0],nodes[0,1],nodes[0,2],color="red",s=100)   #Earth
-    plt.show()
+    r = r_max
 
+    if sphere:
+        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+        x = r*np.cos(u)*np.sin(v)
+        y = r*np.sin(u)*np.sin(v)
+        z = r*np.cos(v)
+        ax.plot_wireframe(x, y, z, color="black",alpha = 0.2,linewidths=0.5)
+    
+    plt.show() 
+    return fig,ax
+    
 ## disable some links for a certain amount of time
 ##
 ## delta_t = time between steps (in seconds)
