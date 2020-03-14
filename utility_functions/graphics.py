@@ -22,18 +22,19 @@ def pkt_plot(packets, t_tx, axs = None, seed = None):
     
     colors=[(np.random.rand(),np.random.rand(),np.random.rand(),1) for x in packets]
     
-    lc = mc.LineCollection(lines, linewidths=10,color=colors)
+    lc = mc.LineCollection(lines, linewidths=10,color=colors, label = "Packet reception")
     if axs is None:
         _, axs = plt.subplots()
 
     axs.add_collection(lc)
 
-    seg_c = mc.LineCollection(seg, linewidths=10,color="black")
+    seg_c = mc.LineCollection(seg, linewidths=10,color="black", label = "Idle time")
     axs.add_collection(seg_c)
     axs.set_xlim(0,(recept_times[-1]+t_tx)*1.01)
     axs.set_ylim(-0.5,0.5)
     axs.set_yticks([])
     axs.set_xlabel("Time(s)")
     axs.set_title("Arrival time to earth of each packet")
+    axs.legend()
     
     plt.show()
