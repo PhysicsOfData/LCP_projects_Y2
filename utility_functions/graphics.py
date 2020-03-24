@@ -66,7 +66,7 @@ def plot_idle(packets, t_tx, axs = None, seed = None):
     axs.set_ylim(-0.5,0.5)
     axs.set_yticks([])
     axs.set_xlabel("Time(s)")
-    axs.set_title("Arrival time to earth of each packet")
+    axs.set_title("Active time vs idle time of Earth")
     axs.legend()
     
     plt.show()
