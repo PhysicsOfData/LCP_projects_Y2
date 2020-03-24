@@ -27,8 +27,8 @@ def generate_network(n,r_max,polar = False, seed = None):
 def plot_network(nodes,sphere=False,r_max=0):
     fig = plt.figure(figsize=(7,7))
     ax = Axes3D(fig)
-    ax.scatter(nodes[1:,0],nodes[1:,1],nodes[1:,2])
-    ax.scatter(nodes[0,0],nodes[0,1],nodes[0,2],color="red",s=100)   #Earth
+    ax.scatter(nodes[1:,0],nodes[1:,1],nodes[1:,2],color=(174/255,41/255,41/255))
+    ax.scatter(nodes[0,0],nodes[0,1],nodes[0,2],color=(174/255,41/255,41/255),s=200,alpha=0.8)   #Earth
     r = r_max
 
     if sphere:
@@ -36,7 +36,7 @@ def plot_network(nodes,sphere=False,r_max=0):
         x = r*np.cos(u)*np.sin(v)
         y = r*np.sin(u)*np.sin(v)
         z = r*np.cos(v)
-        ax.plot_wireframe(x, y, z, color="black",alpha = 0.2,linewidths=0.5)
+        ax.plot_wireframe(x, y, z, color=(88/255,88/255,88/255),alpha = 0.2,linewidths=0.8)
     
     plt.show() 
     return fig,ax
