@@ -19,7 +19,7 @@ def check_active(link, link_list):
 
 def update_lines(num, dataLines, lines, active_links, title) :
 
-    title.set_text("Time = {}".format(num))
+    title.set_text("Time = {}s".format(num))
     
     for line, data in zip(lines, dataLines) :
         line.set_data(data[0:2, :])
@@ -69,4 +69,4 @@ def update_graph(num,graph,coord,coord_nodes,start_times,arrival_times,step,n_pk
 
     
     graph._offsets3d = (coord[:,0],coord[:,1],coord[:,2])
-    title.set_text("Time = {}".format(num))
+    title.set_text("Time = {}s".format(num))

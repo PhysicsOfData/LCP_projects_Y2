@@ -87,7 +87,7 @@ def disable_links(A,total_time,delta_t,mode="light",priority="random", custom_n_
         offtimes = [time_max * 2]   #selected links stay off for around 2 * time_max
         
     elif mode == "unstable":
-        rate = possible_links.shape[0] * 0.3  #disable 20% of possible links every time_max 
+        rate = possible_links.shape[0] * 0.3  #disable 30% of possible links every time_max 
         offtimes = [time_max * 0.25]   #selected links stay off for around 0.25 * time_max
         
     elif mode == "extreme":
